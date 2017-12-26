@@ -1,0 +1,89 @@
+#include <iostream>
+
+struct Node  {
+    int value;
+    Node *next;
+
+    Node(): value(0), next(NULL) {}
+
+    Node(int v_, Node *next_ = NULL): value(v_), next(next_) {}
+};
+
+class List {
+public:
+    Node *root, *last;
+    List() {
+        root = NULL;
+        last = root;
+    }
+    void add(int a) {
+        Node* x = new Node(a);
+        if (root == NULL) {
+            root = x;
+            last = x;
+        } else {
+            last->next = x;
+            last = x;
+        }
+    }
+};
+
+List Merge(const List &a, const List &b) {
+    List ans;
+    Node * i = a.root, * j = b.root;
+    while (i != NULL && j != NULL) {
+        if (i->value <= j->value) {
+            ans.add(i->value);
+            i = i-> next;
+        } else {
+            ans.add(j->value);
+            j = j->next;
+        }
+    }
+    while (i != NULL) {
+        ans.add(i->value);
+        i = i->next;
+    }
+    while (j != NULL) {
+        ans.add(j->value);
+        j = j->next;
+    }
+    return ans;
+}
+
+List merge_sort(Node * start, Node * last, size_t n) {
+    if (n < 2) {
+        List v;
+        while (start != last) {
+            v.add(start->value);
+            start = start->next;
+        }
+        return v;
+    } else {
+        Node * middle = start;
+        for (size_t i = 0; i != n/2; i++) {
+            middle = middle->next;
+        }
+        return Merge(merge_sort(start, middle, n/2), merge_sort(middle, last, n - n/2));
+    }
+}
+
+int main() {
+    size_t n;
+    std::cin >> n;
+    List v;
+    int x;
+    for (size_t i = 0; i != n; ++i) {
+        std::cin >> x;
+        v.add(x);
+    }
+
+    v = merge_sort(v.root, NULL, n);
+
+    Node * elem = v.root;
+    while (elem != NULL) {
+        std::cout << elem->value << " ";
+        elem = elem->next;
+    }
+    return 0;
+}
