@@ -11,12 +11,14 @@ struct Node  {
 
 class List {
 public:
+
     Node *root, *last;
     List() {
         root = NULL;
         last = root;
     }
-    void add(int a) {
+
+    void push_back(int a) {
         Node* x = new Node(a);
         if (root == NULL) {
             root = x;
@@ -26,47 +28,126 @@ public:
             last = x;
         }
     }
-};
 
-List Merge(const List &a, const List &b) {
-    List ans;
-    Node * i = a.root, * j = b.root;
-    while (i != NULL && j != NULL) {
-        if (i->value <= j->value) {
-            ans.add(i->value);
-            i = i-> next;
+    void push_back(Node *x) {
+        if (root == NULL) {
+            root = x;
+            last = x;
         } else {
-            ans.add(j->value);
-            j = j->next;
+            last->next = x;
+            last = x;
         }
     }
-    while (i != NULL) {
-        ans.add(i->value);
-        i = i->next;
+
+    struct iterator {
+        Node *v;
+
+        iterator(Node* x) : v(x) {}
+
+        iterator operator ++() {
+            v = v->next;
+            return v;
+        }
+
+        iterator operator + (int x) {
+            Node *w = v;
+            while (x && w != NULL) {
+                w = w->next;
+                --x;
+            }
+            return w;
+        }
+
+        int& operator *() {
+            return v->value;
+        }
+
+    };
+
+    List(iterator first, iterator second);
+
+    void push_back(iterator it) {
+        push_back(it.v);
     }
-    while (j != NULL) {
-        ans.add(j->value);
-        j = j->next;
+};
+
+List::iterator begin(const List &a) {
+    return a.root;
+}
+
+List::iterator end(const List &a) {
+    return NULL;
+}
+
+bool operator == (const List::iterator &a, const List::iterator &b) {
+    return a.v == b.v;
+}
+
+bool operator != (const List::iterator &a, const List::iterator &b) {
+    return a.v != b.v;
+}
+
+List::List(iterator first, iterator second) {
+    root = NULL;
+    last = root;
+    while (first != second) {
+        Node *x = new Node(first.v->value);
+        std::cout << first.v->value << " ";
+        last->next = x;
+        last = x;
+        ++first;
+    }
+}
+
+int operator - (const List::iterator &a, List::iterator b) {
+    int ans = 0;
+    while (b != a) {
+        ++ans;
+        ++b;
     }
     return ans;
 }
 
-List merge_sort(Node * start, Node * last, size_t n) {
-    if (n < 2) {
-        List v;
-        while (start != last) {
-            v.add(start->value);
-            start = start->next;
+
+//template <typename RandomIt>
+List Merge(List::iterator start_a, List::iterator finish_a, List::iterator start_b, List::iterator finish_b) {
+    List ans = List();
+    while (start_a != finish_a && start_b != finish_b) {
+        if (!((*start_b) < (*start_a))) {
+            ans.push_back(*start_a);
+            ++start_a;
+        } else {
+            ans.push_back(*start_b);
+            ++start_b;
         }
-        return v;
+    }
+    while (start_a != finish_a) {
+        ans.push_back(*start_a);
+        ++start_a;
+    }
+    while (start_b != finish_b) {
+        ans.push_back(*start_b);
+        ++start_b;
+    }
+    return ans;
+}
+
+void MergeSort(List::iterator range_begin, List::iterator range_end) {
+    if (range_end - range_begin < 2) {
+        return;
     } else {
-        Node * middle = start;
-        for (size_t i = 0; i != n/2; i++) {
-            middle = middle->next;
+        List::iterator range_middle = range_begin + (range_end - range_begin) / 2;
+        MergeSort(range_begin, range_middle);
+        MergeSort(range_middle, range_end);
+        List x = Merge(range_begin, range_middle, range_middle, range_end);
+        List::iterator b = begin(x), cur = range_begin;
+        for (; b!= end(x); ++b) {
+            std::swap(*b, *cur);
+            ++cur;
         }
-        return Merge(merge_sort(start, middle, n/2), merge_sort(middle, last, n - n/2));
     }
 }
+
 
 int main() {
     size_t n;
@@ -75,11 +156,10 @@ int main() {
     int x;
     for (size_t i = 0; i != n; ++i) {
         std::cin >> x;
-        v.add(x);
+        v.push_back(x);
     }
 
-    v = merge_sort(v.root, NULL, n);
-
+    MergeSort(begin(v), end(v));
     Node * elem = v.root;
     while (elem != NULL) {
         std::cout << elem->value << " ";
@@ -87,3 +167,4 @@ int main() {
     }
     return 0;
 }
+
