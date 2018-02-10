@@ -4,35 +4,50 @@ struct Node  {
     int value;
     Node *next;
 
-    Node(): value(0), next(NULL) {}
-
     explicit Node(int v_, Node *next_ = nullptr): value(v_), next(next_) {}
 };
+
+bool is_less(Node *first, Node *second) {
+    if (first == nullptr) {
+        return false;
+    }
+    if (second == nullptr) {
+        return true;
+    }
+    return first->value < second->value;
+}
+
+int distance(Node *first, Node *second) {
+    int dif = 0;
+    Node *start = first;
+    while (start != second) {
+        dif++;
+        start = start->next;
+    }
+    return dif;
+}
+
+Node* shift(Node *first, int x) {
+    Node *node = first;
+    while (x) {
+        x--;
+        node = node->next;
+    }
+    return node;
+}
 
 class List {
 private:
     Node *root, *last;
 
-    void push_back(Node *node) {
-        node->next = NULL;
-        if (root == NULL) {
-            root = node;
-            last = node;
-        } else {
-            last->next = node;
-            last = node;
-        }
-    }
-
 public:
     List() {
-        root = NULL;
+        root = nullptr;
         last = root;
     }
 
-    void push_back(int value) {
-        Node* node = new Node(value);
-        if (root == NULL) {
+    void push_back(Node *node) {
+        if (root == nullptr) {
             root = node;
             last = node;
         } else {
@@ -41,62 +56,21 @@ public:
         }
     }
 
-    struct iterator {
-        Node *v;
+    void push_back(int value) {
+        push_back(new Node(value));
+    }
 
-        iterator(Node* node) : v(node) {}
-
-        iterator operator ++() {
-            v = v->next;
-            return v;
-        }
-
-        iterator operator + (int x) const {
-            Node *node = v;
-            while (x) {
-                node = node->next;
-                --x;
-            }
-            return node;
-        }
-
-        int operator - (iterator other) const {
-            int dif = 0;
-            while (*this != other) {
-                ++dif;
-                ++other;
-            }
-            return dif;
-        }
-
-        int& operator *() const {
-            return v->value;
-        }
-
-        bool operator == (iterator other) const {
-            return (*this).v == other.v;
-        }
-
-        bool operator != (iterator other) const {
-            return (*this).v != other.v;
-        }
-    };
-
-    iterator begin() const {
+    Node* begin() const {
         return root;
     }
 
-    iterator end() const {
+    Node* end() const {
         return last->next;
-    }
-
-    void push_back(iterator it) {
-        push_back(it.v);
     }
 
     void clear() {
         Node *v = root;
-        while (v != NULL) {
+        while (v != nullptr) {
             Node *cur = v->next;
             delete v;
             v = cur;
@@ -104,44 +78,39 @@ public:
     }
 };
 
-
-List Merge(List::iterator start_a, List::iterator start_b) {
-    List ans = List();
-    while (start_a != NULL && start_b != NULL) {
-        if (!(*start_b < *start_a)) {
-            List::iterator tmp = start_a;
-            ++start_a;
-            ans.push_back(tmp);
+Node* Merge(Node* start_a, Node* start_b) {
+    List result;
+    while (start_a != nullptr || start_b != nullptr) {
+        if (!is_less(start_a, start_b)) {
+            result.push_back(start_b);
+            start_b = start_b->next;
         } else {
-            List::iterator tmp = start_b;
-            ++start_b;
-            ans.push_back(tmp);
+            result.push_back(start_a);
+            start_a = start_a->next;
         }
     }
-    while (start_a != NULL) {
-        List::iterator tmp = start_a;
-        ++start_a;
-        ans.push_back(tmp);
-    }
-    while (start_b != NULL) {
-        List::iterator tmp = start_b;
-        ++start_b;
-        ans.push_back(tmp);
-    }
-    return ans;
+    return result.begin();
 }
 
-List::iterator MergeSort(List::iterator range_begin, List::iterator range_end) {
-    if (range_end - range_begin < 2) {
-        range_begin.v->next = NULL;
-        return range_begin;
+Node* MergeSort(Node* _begin, Node* _end) {
+    if (distance(_begin, _end) < 2) {
+        _begin->next = nullptr;
+        return _begin;
     }
-    List::iterator range_middle = range_begin + (range_end - range_begin) / 2;
-    range_begin = MergeSort(range_begin, range_middle);
-    range_middle = MergeSort(range_middle, range_end);
-    return Merge(range_begin, range_middle).begin();
+    Node* _middle = shift(_begin, distance(_begin, _end) / 2);
+    _begin = MergeSort(_begin, _middle);
+    _middle = MergeSort(_middle, _end);
+    return Merge(_begin, _middle);
 }
 
+void print(Node *root) {
+    Node *elem = root;
+    while (elem != nullptr) {
+        std::cout << elem->value << " ";
+        elem = elem->next;
+    }
+    std::cout << "\n";
+}
 
 int main() {
     size_t n;
@@ -153,11 +122,8 @@ int main() {
         v.push_back(x);
     }
 
-    Node* elem = MergeSort(v.begin(), v.end()).v;
-    while (elem != NULL) {
-        std::cout << elem->value << " ";
-        elem = elem->next;
-    }
+    Node* elem = MergeSort(v.begin(), v.end());
+    print(elem);
     v.clear();
     return 0;
 }
