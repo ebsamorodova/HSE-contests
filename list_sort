@@ -1,0 +1,129 @@
+#include <iostream>
+
+struct Node  {
+    int value;
+    Node *next;
+
+    explicit Node(int v_, Node *next_ = nullptr): value(v_), next(next_) {}
+};
+
+bool is_less(Node *first, Node *second) {
+    if (first == nullptr) {
+        return false;
+    }
+    if (second == nullptr) {
+        return true;
+    }
+    return first->value < second->value;
+}
+
+int distance(Node *first, Node *second) {
+    int dif = 0;
+    Node *start = first;
+    while (start != second) {
+        dif++;
+        start = start->next;
+    }
+    return dif;
+}
+
+Node* shift(Node *first, int x) {
+    Node *node = first;
+    while (x) {
+        x--;
+        node = node->next;
+    }
+    return node;
+}
+
+class List {
+private:
+    Node *root, *last;
+
+public:
+    List() {
+        root = nullptr;
+        last = root;
+    }
+
+    void push_back(Node *node) {
+        if (root == nullptr) {
+            root = node;
+            last = node;
+        } else {
+            last->next = node;
+            last = node;
+        }
+    }
+
+    void push_back(int value) {
+        push_back(new Node(value));
+    }
+
+    Node* begin() const {
+        return root;
+    }
+
+    Node* end() const {
+        return last->next;
+    }
+
+    void clear() {
+        Node *v = root;
+        while (v != nullptr) {
+            Node *cur = v->next;
+            delete v;
+            v = cur;
+        }
+    }
+};
+
+Node* Merge(Node* start_a, Node* start_b) {
+    List result;
+    while (start_a != nullptr || start_b != nullptr) {
+        if (!is_less(start_a, start_b)) {
+            result.push_back(start_b);
+            start_b = start_b->next;
+        } else {
+            result.push_back(start_a);
+            start_a = start_a->next;
+        }
+    }
+    return result.begin();
+}
+
+Node* MergeSort(Node* _begin, Node* _end) {
+    if (distance(_begin, _end) < 2) {
+        _begin->next = nullptr;
+        return _begin;
+    }
+    Node* _middle = shift(_begin, distance(_begin, _end) / 2);
+    _begin = MergeSort(_begin, _middle);
+    _middle = MergeSort(_middle, _end);
+    return Merge(_begin, _middle);
+}
+
+void print(Node *root) {
+    Node *elem = root;
+    while (elem != nullptr) {
+        std::cout << elem->value << " ";
+        elem = elem->next;
+    }
+    std::cout << "\n";
+}
+
+int main() {
+    size_t n;
+    std::cin >> n;
+    List v;
+    int x;
+    for (size_t i = 0; i != n; ++i) {
+        std::cin >> x;
+        v.push_back(x);
+    }
+
+    Node* elem = MergeSort(v.begin(), v.end());
+    print(elem);
+    v.clear();
+    return 0;
+}
